@@ -4,10 +4,40 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { User } from 'prisma/prisma-client';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtService } from '@nestjs/jwt';
+import { UserCredentialDto } from './dto/user-credential.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async loginUser(
+    userCredentialDto: UserCredentialDto,
+  ): Promise<{ accessToken: string }> {
+    const { email, password } = userCredentialDto;
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { password: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        '해당 이메일로 등록된 사용자를 찾을 수 없습니다.',
+      );
+    }
+
+    if (await bcrypt.compare(password, user.password)) {
+      const payload = { email };
+      const accessToken = this.jwtService.sign(payload);
+
+      return { accessToken };
+    } else {
+      throw new UnauthorizedException('비밀번호가 다릅니다.');
+    }
+  }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { email, username, nickname, password, promo, birthday } =
@@ -72,5 +102,9 @@ export class AuthService {
         },
       });
     }
+  }
+
+  async deleteUser(email: string): Promise<void> {
+    await this.prisma.user.delete({ where: { email } });
   }
 }
