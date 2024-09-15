@@ -23,6 +23,8 @@ model User {
   status      String?
   avatar_url  String?
   pronoun     String?
+  phone       String?
+  birth       DateTime
   role        Role     @default(User)
   promo       Boolean  @default(false)
   join_date   DateTime @default(now())
