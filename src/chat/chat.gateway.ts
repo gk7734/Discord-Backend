@@ -7,12 +7,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ namespace: 'chat' })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Socket;
+  server: Server;
+
+  private userSocketMap = new Map<string, string>();
 
   handleConnection(socket: Socket) {
     console.log(`User connected: ${socket.id}`);
@@ -23,18 +25,66 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join')
-  handleJoin(@MessageBody() userId: string, @ConnectedSocket() client: Socket) {
-    console.log(userId);
+  handleJoin(
+    @MessageBody('userId') userId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    console.log(`User ${userId} joined with socket ${client.id}`);
+    this.userSocketMap.set(userId, client.id);
     client.join(userId);
   }
 
   @SubscribeMessage('sendDM')
   handleDirectMessage(
-    @MessageBody() data: { to: string; content: string },
-    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { from: string; to: string; content: string },
   ) {
     console.log(data);
-    const { to, content } = data;
-    this.server.to(to).emit('receiveDM', { from: client.id, content });
+    const { from, to, content } = data;
+    const toSocketId = this.userSocketMap.get(to);
+
+    if (toSocketId) {
+      this.server.to(toSocketId).emit('receiveDM', { from, content });
+    } else {
+      console.log(`User ${to} not found or not connected`);
+    }
+  }
+
+  @SubscribeMessage('roomJoin')
+  handleRoomJoin(
+    @MessageBody('room') room: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.join(room);
+    console.log(`Client ${client.id} joined room: ${room}`);
+    // 새 사용자가 참여했음을 방의 다른 사용자들에게 알림
+    client.to(room).emit('userJoined', { userId: client.id, room });
+  }
+
+  @SubscribeMessage('chatMessage')
+  handleChatMessage(
+    @MessageBody() data: { room: string; content: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { room, content } = data;
+
+    if (!client.rooms.has(room)) {
+      console.log(`Client ${client.id} is not in room ${room}`);
+      client.emit('error', { message: 'You are not in this room' });
+      return;
+    }
+
+    const message = {
+      sender: client.id,
+      content,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      client.to(room).emit('newMessage', message);
+      console.log(`Message sent to room ${room}: ${content}`);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      client.emit('error', { message: 'Failed to send message' });
+    }
   }
 }

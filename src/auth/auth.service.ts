@@ -47,7 +47,7 @@ export class AuthService {
       select: { email: true },
     });
 
-    if (email === isUserExist.email) {
+    if (isUserExist) {
       throw new UnauthorizedException('중복 사용자 제한');
     }
 
