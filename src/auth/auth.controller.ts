@@ -1,9 +1,8 @@
-import { Body, Controller, Delete, Patch, Post, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Patch, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserCredentialDto } from './dto/user-credential.dto';
-import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {

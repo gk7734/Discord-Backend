@@ -34,7 +34,7 @@ model User {
 }
 
 model Friend {
-  id        BigInt       @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   user      User         @relation("UserFriends", fields: [userId], references: [id])
   userId    String
   friend    User         @relation("FriendOfUser", fields: [friendId], references: [id])
