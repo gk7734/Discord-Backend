@@ -14,25 +14,46 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  nickname    String
-  username    String
-  password    String
-  description String?
-  status      String?
-  avatar_url  String?
-  pronoun     String?
-  phone       String?
-  birth       DateTime
-  role        Role     @default(User)
-  promo       Boolean  @default(false)
-  join_date   DateTime @default(now())
-  update_date DateTime @updatedAt
+  id           String   @id @default(uuid())
+  email        String   @unique
+  nickname     String
+  username     String   @unique
+  password     String
+  description  String?
+  status       String?
+  avatar_url   String?
+  pronoun      String?
+  phone        String?
+  birth        DateTime
+  role         Role     @default(User)
+  promo        Boolean  @default(false)
+  join_date    DateTime @default(now())
+  update_date  DateTime @updatedAt
+  friendsAdded Friend[] @relation("UserFriends")
+  friendOf     Friend[] @relation("FriendOfUser")
+}
+
+model Friend {
+  id        BigInt       @id @default(autoincrement())
+  user      User         @relation("UserFriends", fields: [userId], references: [id])
+  userId    String
+  friend    User         @relation("FriendOfUser", fields: [friendId], references: [id])
+  friendId  String
+  status    FriendStatus @default(Pending)
+  createdAt DateTime     @default(now())
+
+  @@unique([userId, friendId])
 }
 
 enum Role {
   Admin
   User
   Developer
+}
+
+enum FriendStatus {
+  Pending
+  Accepted
+  Declined
+  Blocked
 }

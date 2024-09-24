@@ -29,7 +29,7 @@ export class AuthService {
       );
     }
 
-    if (await bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const payload = { email };
       const accessToken = this.jwtService.sign(payload);
 
@@ -39,7 +39,7 @@ export class AuthService {
     }
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(createUserDto: CreateUserDto): Promise<{ message: string }> {
     const { email, username, nickname, password, promo, birthday } =
       createUserDto;
     const isUserExist = await this.prisma.user.findUnique({
@@ -54,7 +54,7 @@ export class AuthService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    return this.prisma.user.create({
+    await this.prisma.user.create({
       data: {
         email,
         username,
@@ -64,6 +64,8 @@ export class AuthService {
         promo,
       },
     });
+
+    return { message: '회원가입이 완료되었습니다.' };
   }
 
   async updateUser(updateUserDto: UpdateUserDto): Promise<User> {
