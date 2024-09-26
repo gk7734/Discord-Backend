@@ -1,8 +1,18 @@
-import { Body, Controller, Delete, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserCredentialDto } from './dto/user-credential.dto';
+import { JwtAuthGuard } from './jwt/jwt.guard';
+import { GetUser } from '../decorator/get-user.decorator';
+import { User } from 'prisma/prisma-client';
 
 @Controller('auth')
 export class AuthController {
@@ -22,12 +32,14 @@ export class AuthController {
   }
 
   @Patch('update')
+  @UseGuards(JwtAuthGuard)
   updateUser(@Body() updateUserDto: UpdateUserDto) {
     return this.authService.updateUser(updateUserDto);
   }
 
-  @Delete('delete')
-  deleteUser(@Body('email') email: string): Promise<void> {
-    return this.authService.deleteUser(email);
+  @Delete('resign')
+  @UseGuards(JwtAuthGuard)
+  deleteUser(@GetUser() user: User): Promise<void> {
+    return this.authService.deleteUser(user.email);
   }
 }

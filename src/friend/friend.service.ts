@@ -42,4 +42,6 @@ export class FriendService {
       return this.prisma.friend.delete({ where: { id } });
     }
   }
+
+  async deleteFriend() {}
 }
