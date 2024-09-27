@@ -1,24 +1,31 @@
 import {
   Body,
-  Controller, Param,
-  ParseBoolPipe, ParseIntPipe,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
-import { Request } from 'express';
+import { GetUser } from '../decorator/get-user.decorator';
+import { User } from 'prisma/prisma-client';
 
 @Controller('friend')
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
 
+  @Get('online-list')
+  @UseGuards(JwtAuthGuard)
+  getOnlineList(@GetUser() user: User) {
+    return this.friendService.getOnlineList(user.id);
+  }
+
   @Post('add')
   @UseGuards(JwtAuthGuard)
-  addFriend(@Body('username') username: string, @Req() req: Request) {
-    const parseJSON = JSON.parse(JSON.stringify(req.user));
-    return this.friendService.addFriend(parseJSON.id, username);
+  addFriend(@Body('username') username: string, @GetUser() user: User) {
+    return this.friendService.addFriend(user.id, username);
   }
 
   @Post('pending/:id')
@@ -26,9 +33,8 @@ export class FriendController {
   friendPending(
     @Param('id', ParseIntPipe) id: number,
     @Body('accept') accept: boolean,
-    @Req() req: Request,
+    @GetUser() user: User,
   ) {
-    const parseJSON = JSON.parse(JSON.stringify(req.user));
-    return this.friendService.friendPending(id, parseJSON.id, accept);
+    return this.friendService.friendPending(id, user.id, accept);
   }
 }

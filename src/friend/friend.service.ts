@@ -5,6 +5,17 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FriendService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getOnlineList(id: string) {
+    const friends = await this.prisma.user.findUnique({
+      where: { id },
+      select: { friendsAdded: { select: { friend: true } } },
+    });
+
+    return friends.friendsAdded.filter(
+      (friend) => friend.friend.status === 'online',
+    );
+  }
+
   async addFriend(myId: string, username: string) {
     const friend = await this.prisma.user.findUnique({
       where: { username },
