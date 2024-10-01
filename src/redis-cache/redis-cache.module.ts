@@ -1,9 +1,20 @@
 import { Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
 import { RedisCacheService } from './redis-cache.service';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
-  imports: [CacheModule.register()],
+  imports: [
+    ClientsModule.register([
+      {
+        name: 'REDIS_CLIENT',
+        transport: Transport.REDIS,
+        options: {
+          host: 'localhost',
+          port: 6379,
+        },
+      },
+    ]),
+  ],
   providers: [RedisCacheService],
   exports: [RedisCacheService],
 })

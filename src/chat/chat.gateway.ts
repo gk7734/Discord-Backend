@@ -8,20 +8,27 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { RedisCacheService } from '../redis-cache/redis-cache.service';
 
 @WebSocketGateway({ namespace: 'chat' })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private userSocketMap = new Map<string, string>();
+  constructor(private readonly redisService: RedisCacheService) {}
 
   handleConnection(socket: Socket) {
     console.log(`User connected: ${socket.id}`);
   }
 
-  handleDisconnect(socket: Socket) {
+  async handleDisconnect(socket: Socket) {
     console.log(`User disconnected: ${socket.id}`);
+
+    const users = await this.redisService.keys('user:*');
+    for (const userKey of users) {
+      const socketId = await this.redisService.get(userKey);
+
+    }
   }
 
   @SubscribeMessage('join')
