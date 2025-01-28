@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Patch,
   Post,
   UseGuards,
@@ -17,6 +18,12 @@ import { User } from 'prisma/prisma-client';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('getUser')
+  @UseGuards(JwtAuthGuard)
+  async getUser(@GetUser() user: User): Promise<User> {
+    return user;
+  }
 
   @Post('login')
   async loginUser(@Body() userCredentialDto: UserCredentialDto) {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class FriendService {
     });
 
     return friends.friendsAdded.filter(
-      (friend) => friend.friend.status === 'online',
+      (friend) => friend.friend.status === 'Online',
     );
   }
 
@@ -24,6 +24,14 @@ export class FriendService {
 
     if (!friend) {
       throw new NotFoundException('친구를 찾을 수 없습니다.');
+    }
+
+    const exFriend = await this.prisma.friend.findFirst({
+      where: { userId: myId, friendId: friend.id },
+    });
+
+    if (exFriend) {
+      throw new UnauthorizedException('친구 요청 이미 하였습니다.');
     }
 
     return this.prisma.friend.create({

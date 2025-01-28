@@ -4,16 +4,17 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'fs';
 
 async function bootstrap() {
-  const httpsOptions = {
-    key: fs.readFileSync('./cert/dev.mydomain.com+3-key.pem'),
-    cert: fs.readFileSync('./cert/dev.mydomain.com+3.pem'),
-  };
+  // const httpsOptions = {
+  //   key: fs.readFileSync('./cert/dev.mydomain.com+3-key.pem'),
+  //   cert: fs.readFileSync('./cert/dev.mydomain.com+3.pem'),
+  // };
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    httpsOptions,
-  });
-  app.enableCors({ origin: 'https://test.mydomain.com' });
+  //  {
+  //     httpsOptions,
+  //   }
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.enableCors({ origin: '*' });
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap().catch(console.error);
